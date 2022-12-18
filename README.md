@@ -1,3 +1,5 @@
+This GitHub repository is a slimmed down version from the below GitHub. No ownership is claimed and it was just uploaded for simplicity.
+
 PDFDataExtractor
 ================
 
@@ -11,26 +13,6 @@ PDFDataExtractor is a toolkit for automatically extracting semantic information 
 * | Angewandte
 * | Chemistry A European Journal
 * | American Chemistry Society
-
-This guide provides a quick tour through **PDFDataExtractor** concepts and functionalities.
-
-Features
-========
-* |  Extract metadata information from scientific PDFs, including: title, anthor, abstract, journal name, journal year, journal volume, journal page number, doi, keywords, figure captions, section titles, heading, page number and references
-
-* |  Chemistry-aware PDF information extraction
-
-* |  Outputs PDF articles in plain text, JSON
-
-* |  Extract articles from six main stream chemistry and physics publishers with high precision
-
-* |  Automated publisher detection
-
-
-Developing Features
-===================
-* Web services for a more user friendly experience
-* Supports for more publishers
 
 Citing
 ======
