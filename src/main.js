@@ -1,37 +1,99 @@
-const {app, BrowserWindow} = require('electron')
-const ui = require('./desktop_app/utilities/ui')
+const { app, BrowserWindow, ipcMain, dialog, utilityProcess } = require('electron');
+const { appendFileSync } = require('fs');
+const path = require('path');
+
+let mainWindow;
+
+app.on('ready', () => {
+    createWindow();
+});
+
 
 function createWindow () {
-  // Create the browser window.
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: true
-    }
-  })
+    // Create the browser window.
+    mainWindow = new BrowserWindow({
+        width: 1024,
+        height: 600,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+        }
+    });
 
-  // Call the ui.createButton() function to create a button
-  const button = ui.createButton('Click me')
+    // and load the index.html of the app.
+    mainWindow.loadFile(path.join(__dirname, 'desktop_app/index.html'));
 
-  // Add the button to the window
-  win.add(button)
+    // Open the DevTools.
+    mainWindow.webContents.openDevTools();
 
-  // and load the index.html of the app.
-  win.loadFile('desktop_app/index.html')
-}
-
-app.whenReady().then(createWindow)
+    mainWindow.on('closed', function () {
+        mainWindow = null
+    });
+};
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
-  }
-})
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    }
+});
+
+//ipcMain.on will receive the load-file info from renderprocess 
+ipcMain.on("load-file", async function (event, arg) {
+    const options = {
+        title: 'Select a PDF file',
+        defaultPath: __dirname,
+        buttonLabel: 'Select',
+        filters: [
+            { name: 'PDF', extensions: ['pdf'] }
+        ],
+        properties: ['openFile']
+    };
+    const filepath = await dialog.showOpenDialog(null, options);
+    // event.sender.send in ipcMain will return the reply to renderprocess
+    event.sender.send("file-loaded", filepath.filePaths[0]); 
+});
+
+//ipcMain.on will receive the save-file info from renderprocess
+ipcMain.on("save-file", async function (event, arg) {
+    const options = {
+        title: 'Save MP3 file',
+        defaultPath: __dirname,
+        buttonLabel: 'Select',
+        filters: [
+            { name: 'MP3', extensions: ['mp3'] }
+        ],
+    };
+    const filepath = await dialog.showSaveDialog(null, options);
+    // event.sender.send in ipcMain will return the reply to renderprocess
+    event.sender.send("file-saved", filepath.filePath); 
+});
+
+//ipcMain.on will receive the convert-file info from renderprocess
+ipcMain.on("convert-file", async function (event, arg) {
+    var spawn = require("child_process").spawn;
+    var conversion = spawn('python',["./src/example.py"]);
+
+    conversion.stdout.on('data', (data) => {
+        data
+        console.log(`stdout: ${data}`);
+        event.sender.send("file-converted", data.toString());
+    });
+    
+    conversion.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+    });
+    
+    conversion.on('close', (code) => {
+        console.log(`child process exited with code ${code}`);
+    });
+});
+
