@@ -21,7 +21,7 @@ function createWindow () {
     });
 
     // and load the index.html of the app.
-    mainWindow.loadFile(path.join(__dirname, 'desktop_app/index.html'));
+    mainWindow.loadFile(path.join(__dirname, 'src/desktop_app/index.html'));
 
     // Open the DevTools.
     mainWindow.webContents.openDevTools();
@@ -80,7 +80,7 @@ ipcMain.on("save-file", async function (event, arg) {
 //ipcMain.on will receive the convert-file info from renderprocess
 ipcMain.on("convert-file", async function (event, arg) {
     var spawn = require("child_process").spawn;
-    var conversion = spawn('python',["./src/example.py"]);
+    var conversion = spawn('python',["./example.py"]);
 
     conversion.stdout.on('data', (data) => {
         data

@@ -4,7 +4,7 @@
   "description": "PDFDataExtractor\r ================",
   "main": "index.js",
   "scripts": {
-    "start": "electron src/main.js",
+    "start": "electron main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
