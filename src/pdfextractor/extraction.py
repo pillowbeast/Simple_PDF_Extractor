@@ -11,6 +11,7 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from collections import Counter, OrderedDict
 import re
+import numpy as np
 
 
 class Reader:
@@ -181,65 +182,181 @@ class Reader:
     def dic_sorting(self, dic_unsorted):
         return OrderedDict(sorted(dic_unsorted.items()))
 
+    def extract_title(self, dict):
+        """Extract title from the input file"""
+        # Extract text from the first page
+        font_size_max = 0
+        title = None
+        title_key = None
+        for key, value in dict.items():            
+            if key[0] != 0:
+                break
+            if len(value['text']) > 4 and value['font'] != None:
+                if value['font']['font_size_max'] > font_size_max:
+                    title = value['text'].replace('\n', ' ').strip()
+                    title_key = key
+                    font_size_max = value['font']['font_size_max']
+        return title, title_key
+
+    def find_start_and_end(self, dic):
+        """Find the start and end of the PDF"""
+        start_strings = ['Abstract:', 'Introduction:', 'Title:']
+        end_strings = ['Reference', 'References', 'Acknowledgement', 'Acknowledgements']
+
+        # Find the beginning and end of the PDF
+        start_keys = []
+        start_text = []
+        end_keys = []
+        end_text = []
+        start_key = None
+        end_key = None
+        for key,value in dic.items():
+            for start in start_strings:
+                if re.search(start, value['text']):
+                    start_keys.append(key)
+                    start_text.append(value['text'])
+            for end in end_strings:
+                if re.search(end, value['text'], re.IGNORECASE):
+                    end_keys.append(key)
+                    end_text.append(value['text'])
+
+        if start_keys != []:
+            start_key = min(start_keys)
+            if start_key[0] != 0:
+                start_key = None
+        if end_keys != []:
+            end_key = max(end_keys)
+        return start_key, end_key
+
+    def extract_header(self, dic):
+        # Extract font size and content of header
+        header = []
+        header_font = []
+
+        for key, value in dic.items():
+            if key[1] == 0:
+                header.append(value['text'])
+                header_font.append(value['font']['font_size_max'])
+        for font in header_font:
+            if font == None:
+                header_font.remove(font)
+        # font = max(set(header_font), key = header_font.count)
+        # median_font = np.median(np.array(header_font))
+        return header
+
+    def extract_font_size(self, dic):
+        """Extract font size from the input file"""
+        font_size = []
+        for key, value in dic.items():
+            if value['font'] != None:
+                font_size.append(value['font']['font_size_max'])
+        font = max(set(font_size), key = font_size.count)
+        return font
+
+    def remove_figures(self, dic):
+        """Remove figures from the input file"""
+        flags = ['Figure', 'Table', 'figure', 'table', 'image', 'fig.', 'tab.']
+        # Remove figures
+        keys = []
+        for key, value in dic.items():
+            for flag in flags:
+                if re.search(flag, value['text']):
+                    keys.append(key)
+                    break
+        new_dic = {k: v for k, v in dic.items() if k not in keys}
+        return new_dic
+
     def extract_body(self, dic, flags):
         """Extract body text from PDF"""
         print("Extracting body text")
 
-        start_strings = ['abstract', 'introduction', 'title']
-        end_strings = ['Reference', 'References', 'Acknowledgement', 'Acknowledgements']
+        # Extract Title
+        title, title_key = self.extract_title(dic)
+        flags.append(title)
+        print('Title: ', title)
 
         # Find the beginning and end of the PDF
-        start_blocks = []
-        start_text = []
-        end_blocks = []
-        end_text = []
-        for key,value in dic.items():
-            for start in start_strings:
-                if re.search(start, value['text'], re.IGNORECASE):
-                    start_blocks.append(key)
-                    start_text.append(value['text'])
-            for end in end_strings:
-                if re.search(end, value['text'], re.IGNORECASE):
-                    end_blocks.append(key)
-                    end_text.append(value['text'])
-        print(start_blocks)
-        print(start_text)
-        print(end_blocks) 
-        print(end_text)
+        start, end = self.find_start_and_end(dic)
+    
+        # Filter out irrelevant text
+        if start != None and end != None:
+            dic = {k: v for k, v in dic.items() if (k[0] > start[0] and k[0] < end[0] or k[0] == start[0] and k[1] >= start[1] or k[0] == end[0] and k[1] < end[1])}
+        elif start != None:
+            dic = {k: v for k, v in dic.items() if (k[0] > start[0] or k[0] == start[0] and k[1] >= start[1])}
+        elif end != None:
+            dic = {k: v for k, v in dic.items() if (k[0] < end[0] or k[0] == end[0] and k[1] < end[1])}
+        elif title_key != None:
+            dic = {k: v for k, v in dic.items() if (k[0] > title_key[0] or k[0] == title_key[0] and k[1] > title_key[1])}
+        else:
+            pass
+
+        dic = self.remove_figures(dic)
+
+        # Extract font size and content of header
+        header = self.extract_header(dic)
+
+        # Find most common font size
+        body_font_size = self.extract_font_size(dic)
 
         # Extracts relevant text from the PDF
         raw_body = []
-        abstract = False
-        finished = False
         it = 0
         for key, value in dic.items():
             it += 1
-            value['text'] = value['text'].replace('\n', ' ').strip()
+            value['text'] = value['text'].replace('-\n', '').strip()
+            value['text'] = value['text'].replace('\n', ' ')
+            value['text'] = value['text'].replace('  ', ' ')
 
-            for end in end_strings:
-                if re.search(end, value['text']):
-                    finished = True
-                    break
-            if (it<3 and abstract == False):
-                flags.append(value['text'].replace('\n', '').strip())
-                for start in start_strings:
-                    if re.search(start, value['text'], re.IGNORECASE):
-                        abstract = True
-                        break
-            else:
-                read_in = True
-                for exemption in flags:
-                    if re.search(exemption, value['text'], re.IGNORECASE):
-                        read_in = False
-                        break
-                if (len(value['text']) > 7 and value['text'][0].isdigit() == False and value['text'][1].isdigit() == False and read_in):
-                    raw_body.append(value['text'])
+            if (len(value['text']) > 4 and 7 <= value['font']['font_size_ave'] and value['text'][0].isdigit() == False and value['text'][1].isdigit() == False):
+                raw_body.append(value['text'])
 
-            if finished:
-                break
+        # Remove repeted text
+        items = set(raw_body)
+        for item in items:
+            if raw_body.count(item) > 1:
+                flags.append(item)
+                for i in range(raw_body.count(item)-1):
+                    raw_body.remove(item)
 
-            
+        # Removes citations in ( ) and [ ] and remove flags
+        for i in range(len(raw_body)):
+            for flag in flags:
+                raw_body[i] = re.sub(flag, '', raw_body[i])
+            # Remove citations
+            raw_body[i] = re.sub(r' [\(\[][^\(\[]*[0-9][0-9][0-9][0-9][^\(\[]*[\)\]]', '', raw_body[i])
+
+            # Remove URLs, emails
+            raw_body[i] = re.sub(r'(www|http:|https:)+[^\s]+[\w]', '', raw_body[i])
+            raw_body[i] = re.sub(r'[^\s]+(\.com|\.ch|\.de)+[^\s]+[\w]', '', raw_body[i])
+            raw_body[i] = re.sub(r'[^\s]+[A-Z|0-9][\/][A-Z|0-9]+[^\s]+[\w]', '', raw_body[i])
+            raw_body[i] = re.sub(r'[^\s]+[\/]+[^\s]+[\/]+[^\s]+[\w]', '', raw_body[i])
+            raw_body[i] = re.sub(r'[^\s]+@+[^\s]+[\w]', '', raw_body[i])
+
+            # Remove special characters
+            raw_body[i] = re.sub(r' (\W) ', ' ', raw_body[i])
+            raw_body[i] = re.sub(r'[\(\[][.]{3}[\)\]]', '', raw_body[i])
+            raw_body[i] = re.sub(r'[.]{3}', '', raw_body[i])
+            raw_body[i] = re.sub(r'[\(\[][…][\)\]]', '', raw_body[i])
+            raw_body[i] = re.sub(r'[…]', '', raw_body[i])
+            raw_body[i] = re.sub(r'©', '', raw_body[i])
+            raw_body[i]= re.sub(r'[\(\[].[\)\]]', '', raw_body[i])
+
+            # Remove footnote numbers
+            raw_body[i] = re.sub(r'([^ 0-9])([0-9])([^0-9])', '\g<1>\g<3>', raw_body[i])
+            raw_body[i] = re.sub(r'([^ 0-9])([0-9]+)', '\g<1>', raw_body[i])
+
+            # Testing Grounds
+            # b = re.sub(r'([^ 0-9])([0-9]+)', '\g<1>', raw_body[i])
+            # if b != raw_body[i]:
+            #     print(raw_body[i])
+            #     print(b)
+
+        # Removes empty strings
+        raw_body = list(filter(None, raw_body))
+
         # Merges the paragraphs that are split into two lines
+        if title != None:
+            raw_body = [title] + raw_body
         body = []
         next_it = True
         for i in range(len(raw_body)-2):
@@ -253,13 +370,10 @@ class Reader:
                     body.append(raw_body[i])
             else:
                 next_it = True
-        
-        # Removes citations in ( ) and [ ]
-        # for i in range(len(body)):
-        #     body[i] = re.sub(r' [\(\[].*?[0-9][0-9][0-9][0-9][\)\]]', '', body[i])
-        #     #body[i] = re.sub(r'\[[^)]*\]', '', body[i])
-
         body.append(raw_body[-1])
+
+        # Remove strings that are shorter than 10 characters
+        body = [x for x in body if len(x) > 10]
 
         text = '\n\n'.join(body)
         return text
@@ -268,10 +382,8 @@ class Reader:
         """
         Read in a file and process each page using 'single_page_layout()'
         """
-
         print('Reading: ', file_name)
 
-        
         f = open(file_name, 'rb')
         device, interpreter, dic = self.PDFsetup()
         print('File opened')

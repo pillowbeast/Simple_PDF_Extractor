@@ -12,13 +12,15 @@ More specific information can be added with the following arguments:
 -f, --flags: Additional flags to be removed from the text
 -l, --language: Language of the text (default: en)
 -s, --speed: Speed of the text (default: 1.0)
+-i, --access_key_id: Access key id for AWS
+-k, --secret_access_key: Secret access key for AWS
 """
 import argparse
 import boto3
 import time
 import sys
 
-from pdfextractor.extraction import Reader
+from src.pdfextractor.extraction import Reader
 
 def extract_text(path, output_file='undefined.txt', flags=[]):
     file = Reader()
@@ -153,7 +155,7 @@ if __name__ == '__main__':
         # break the execution
         print('Please provide the mode and the filename in the form of the above descirption.')
         sys.exit(1)
-    args.file_name = 'data/input/' + args.file_name
+    args.file_name = args.file_name
     
     if args.mode == 'mp3' and (args.aws_key_id is None or args.aws_secret_key is None):
         print('Please provide a aws_key_id and aws_secret_key to convert to mp3.')
@@ -163,10 +165,10 @@ if __name__ == '__main__':
 
     # define defaults for non-required arguments
     if args.output_path is None:
-        args.output_path = 'data/output/' + args.file_name[:-4] + '.' + args.mode
+        args.output_path = args.file_name[:-4] + '.' + args.mode
         print(args.output_path)
     else:
-        args.output_path = 'data/output/' + args.output_path[:-4] + '.' + args.mode
+        args.output_path = args.output_path[:-4] + '.' + args.mode
     if args.flags is None:
         args.flags = flags
     else:

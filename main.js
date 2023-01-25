@@ -12,8 +12,8 @@ app.on('ready', () => {
 function createWindow () {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 1024,
-        height: 600,
+        width: 1024, //500,
+        height: 500,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -80,10 +80,22 @@ ipcMain.on("save-file", async function (event, arg) {
 //ipcMain.on will receive the convert-file info from renderprocess
 ipcMain.on("convert-file", async function (event, arg) {
     var spawn = require("child_process").spawn;
-    var conversion = spawn('python',["./example.py"]);
+    console.log("convert-file:",arg);
+
+    // Create command from dictionary
+    var command = ['main.py']
+    for (var key in arg) {
+        var value = arg[key];
+        if (value != null) {
+            command.push(key);
+            command.push(value);
+        }
+    }
+    console.log("command:",command);
+    
+    var conversion = spawn('python',command);
 
     conversion.stdout.on('data', (data) => {
-        data
         console.log(`stdout: ${data}`);
         event.sender.send("file-converted", data.toString());
     });
