@@ -138,8 +138,8 @@ def _setup_args():
 
 if __name__ == '__main__':
     # Add the following:
-    aws_key_id = 'AKIA4P7FNQHIVAMAUGMK'
-    aws_secret_key = '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'
+    aws_key_id = ''
+    aws_secret_key = ''
 
     # Additional flags to be removed from the text. Can be iteratively maintained
     with open('assets/flags.txt', 'r') as f:
