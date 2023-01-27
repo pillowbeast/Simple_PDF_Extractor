@@ -1,3 +1,41 @@
+# Foobar
+
+Foobar is a Python library for dealing with word pluralization.
+
+## Installation
+
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
+
+```bash
+pip install foobar
+```
+
+## Usage
+
+```python
+import foobar
+
+# returns 'words'
+foobar.pluralize('word')
+
+# returns 'geese'
+foobar.pluralize('goose')
+
+# returns 'phenomenon'
+foobar.singularize('phenomena')
+```
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
 This GitHub repository is a slimmed down version from the below GitHub. No ownership is claimed and it was just uploaded for simplicity.
 
 PDFDataExtractor
@@ -6,13 +44,6 @@ PDFDataExtractor
 ![GitHub](https://img.shields.io/github/license/cat-lemonade/PDFDataExtractor)
 
 PDFDataExtractor is a toolkit for automatically extracting semantic information from PDF files of scientific articles, which features a template-based architecture with abilities to extract information from the following publishers, and more templates are currently under development: 
-
-* |  Elsevier
-* | Royal Society of Chemistry
-* | Advanced Material Families (Wiley)
-* | Angewandte
-* | Chemistry A European Journal
-* | American Chemistry Society
 
 Citing
 ======
