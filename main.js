@@ -8,7 +8,6 @@ app.on('ready', () => {
     createWindow();
 });
 
-
 function createWindow () {
     // Create the browser window.
     mainWindow = new BrowserWindow({

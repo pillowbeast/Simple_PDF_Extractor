@@ -400,7 +400,7 @@ class Reader:
             print("Length of dic: ", len(dic))
 
         print('*** PDF processed ***')
-        pdf = self.dic_sorting(dic) 
+        pdf = self.dic_sorting(dic)
         print('*** Dic sorted ***')
 
         # Do smth to extract what Fabian needs
