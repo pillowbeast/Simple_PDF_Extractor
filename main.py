@@ -118,7 +118,7 @@ def mode_selection(aws_key_id, aws_secret_key, mode, filename, output_file, flag
         if aws_key_id is None or aws_secret_key is None:
             print('Please add a valid aws_key_id and aws_secret_key')
             return
-        path = 'data/output/'+filename[:-4] + '.' + 'txt'
+        path = filename[:-4] + '.' + 'txt'
         print(path)
         convert_to_mp3(aws_key_id, aws_secret_key, path, output_file, language, speed)
     else:

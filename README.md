@@ -6,8 +6,16 @@ Foobar is a Python library for dealing with word pluralization.
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
 
+Install the python requirements
+
 ```bash
-pip install foobar
+conda create --name <env> --file <this file>
+```
+
+Install Node.js
+   
+```bash
+sudo apt-get install nodejs
 ```
 
 ## Usage
