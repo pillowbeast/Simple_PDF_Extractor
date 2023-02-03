@@ -161,7 +161,7 @@ if __name__ == '__main__':
         print('Please provide a aws_key_id and aws_secret_key to convert to mp3.')
         args.aws_key_id = aws_key_id
         args.aws_secret_key = aws_secret_key
-        #sys.exit(1)
+        sys.exit(1)
 
     # define defaults for non-required arguments
     if args.output_path is None:
@@ -169,6 +169,7 @@ if __name__ == '__main__':
         print(args.output_path)
     else:
         args.output_path = args.output_path[:-4] + '.' + args.mode
+        args.output_path = 'temp\\' + args.file_name.split('\\')[-1][:-3] + args.mode
     if args.flags is None:
         args.flags = flags
     else:

@@ -1,3 +1,6 @@
 node_modules/
-data/
+data/input/*
+data/output/*
+temp/*
+usage_ind.py
 # requirements.txt

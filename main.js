@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog, utilityProcess } = require('electron');
-const { appendFileSync } = require('fs');
+var fs = require('fs');
 const path = require('path');
 
 let mainWindow;
@@ -30,6 +30,20 @@ function createWindow () {
     });
 };
 
+app.on('before-quit', (event) => {
+    console.log('before-quit');
+    // Read the contents of the folder
+    const folder = path.join(__dirname, 'temp');
+    const files = fs.readdirSync(folder);
+
+    // Iterate over each file and delete it
+    files.forEach(file => {
+        const filePath = path.join(folder, file);
+        fs.unlinkSync(filePath);
+    });
+});
+
+
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -52,7 +66,8 @@ ipcMain.on("load-file", async function (event, arg) {
         defaultPath: __dirname,
         buttonLabel: 'Select',
         filters: [
-            { name: 'PDF', extensions: ['pdf'] }
+            { name: 'PDF', extensions: ['pdf'] },
+            { name: 'TXT', extensions: ['txt'] }
         ],
         properties: ['openFile']
     };
@@ -61,25 +76,10 @@ ipcMain.on("load-file", async function (event, arg) {
     event.sender.send("file-loaded", filepath.filePaths[0]); 
 });
 
-//ipcMain.on will receive the save-file info from renderprocess
-ipcMain.on("save-file", async function (event, arg) {
-    const options = {
-        title: 'Save MP3 file',
-        defaultPath: __dirname,
-        buttonLabel: 'Select',
-        filters: [
-            { name: 'MP3', extensions: ['mp3'] }
-        ],
-    };
-    const filepath = await dialog.showSaveDialog(null, options);
-    // event.sender.send in ipcMain will return the reply to renderprocess
-    event.sender.send("file-saved", filepath.filePath); 
-});
-
 //ipcMain.on will receive the convert-file info from renderprocess
-ipcMain.on("convert-file", async function (event, arg) {
+ipcMain.on("convert-txt", async function (event, arg) {
     var spawn = require("child_process").spawn;
-    console.log("convert-file:",arg);
+    console.log("convert-txt:",arg);
 
     // Create command from dictionary
     var command = ['main.py']
@@ -96,7 +96,7 @@ ipcMain.on("convert-file", async function (event, arg) {
 
     conversion.stdout.on('data', (data) => {
         console.log(`stdout: ${data}`);
-        event.sender.send("file-converted", data.toString());
+        event.sender.send("converted-txt", data.toString());
     });
     
     conversion.stderr.on('data', (data) => {
@@ -106,5 +106,83 @@ ipcMain.on("convert-file", async function (event, arg) {
     conversion.on('close', (code) => {
         console.log(`child process exited with code ${code}`);
     });
+});
+
+//ipcMain.on will receive the convert-file info from renderprocess
+ipcMain.on("convert-mp3", async function (event, arg) {
+    var spawn = require("child_process").spawn;
+    console.log("convert-mp3:",arg);
+
+    // Create command from dictionary
+    var command = ['main.py']
+    for (var key in arg) {
+        var value = arg[key];
+        if (value != null) {
+            command.push(key);
+            command.push(value);
+        }
+    }
+    console.log("command:",command);
+    
+    var conversion = spawn('python',command);
+
+    conversion.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+        event.sender.send("converted-mp3", data.toString());
+    });
+    
+    conversion.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+    });
+    
+    conversion.on('close', (code) => {
+        console.log(`child process exited with code ${code}`);
+    });
+});
+
+
+//ipcMain.on will receive the save-txt info from renderprocess
+ipcMain.on("save-txt", async function (event, arg) {
+    // get name from arg
+    filename = arg.split('\\').pop();
+
+    const options = {
+        title: 'Save Txt file',
+        defaultPath: app.getPath('documents') + '\\' + filename,
+        buttonLabel: 'Select',
+        filters: [
+            { name: 'TXT', extensions: ['txt'] }
+        ],
+    };
+    const filepath = await dialog.showSaveDialog(null, options);
+    console.log("save-txt:",filepath.filePath);
+    // Move file from temp folder to selected location
+    console.log("arg:",arg);
+    data = fs.readFileSync(arg);
+    fs.writeFileSync(filepath.filePath, data);
+    // event.sender.send in ipcMain will return the reply to renderprocess
+    event.sender.send("saved-txt", filepath.filePath); 
+});
+
+//ipcMain.on will receive the save-mp3 info from renderprocess
+ipcMain.on("save-mp3", async function (event, arg) {
+    // get name from arg
+    filename = arg.split('\\').pop();
+
+    const options = {
+        title: 'Save MP3 file',
+        defaultPath: __dirname + '\\' + filename,
+        buttonLabel: 'Select',
+        filters: [
+            { name: 'MP3', extensions: ['mp3'] }
+        ],
+    };
+    const filepath = await dialog.showSaveDialog(null, options);
+    console.log("save-mp3:",filepath.filePath)
+    // Move file from temp folder to selected location
+    fs.write(filepath.filePath, fs.read(arg));
+
+    // event.sender.send in ipcMain will return the reply to renderprocess
+    event.sender.send("saved-mp3", filepath.filePath); 
 });
 

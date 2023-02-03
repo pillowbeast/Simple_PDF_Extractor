@@ -12,7 +12,12 @@ Usage: python main.py [-h] [-m MODE] [-n FILE_NAME] [-o OUTPUT_PATH] [-f FLAGS] 
 """
 import subprocess
 
-# TODO: Replace with own inputs
+# Steps:
+# 1. Create a file with name usage_ind.py
+# 2. Copy the following code into the file
+# 3. Replace the file_path and output_path with your own inputs
+# 4. Run the file
+
 file_path = r'C:\Users\user\input\example.pdf'
 output_path = r'C:\Users\user\output\example.txt'
 mode = 'txt'                                                            # 'txt' or 'mp3'

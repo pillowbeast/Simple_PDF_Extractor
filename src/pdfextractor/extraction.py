@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+
+# TODO:
+# 1. Figures and Tables not extracted
+# 2. Flags are too aggressive in whole paragraphs
 """
 PDF document reader.
 """
@@ -290,7 +294,7 @@ class Reader:
         else:
             pass
 
-        dic = self.remove_figures(dic)
+        # dic = self.remove_figures(dic)
 
         # Extract font size and content of header
         header = self.extract_header(dic)
@@ -377,6 +381,19 @@ class Reader:
 
         text = '\n\n'.join(body)
         return text
+    
+    def extract_all(self, dic):
+        # Extracts relevant text from the PDF
+        raw_body = []
+        it = 0
+        for key, value in dic.items():
+            it += 1
+            value['text'] = value['text'].replace('-\n', '').strip()
+            value['text'] = value['text'].replace('\n', ' ')
+            value['text'] = value['text'].replace('  ', ' ')
+            raw_body.append(value['text'])
+        text = '\n\n'.join(raw_body)
+        return text
 
     def read_file(self, file_name, flags):
         """
@@ -403,7 +420,12 @@ class Reader:
         pdf = self.dic_sorting(dic)
         print('*** Dic sorted ***')
 
-        # Do smth to extract what Fabian needs
+        # Comparison file which has all data in it:
+        all_data = self.extract_all(pdf)
+        with open(r'temp\all_data.txt', 'w+', encoding="utf-8") as f:
+            f.write(all_data)
+
+        # Extract the needed paragraphs
         body = self.extract_body(pdf, flags)
         #print(body)
         return body
