@@ -30,18 +30,18 @@ function createWindow () {
     });
 };
 
-app.on('before-quit', (event) => {
-    console.log('before-quit');
-    // Read the contents of the folder
-    const folder = path.join(__dirname, 'temp');
-    const files = fs.readdirSync(folder);
+// app.on('before-quit', (event) => {
+//     console.log('before-quit');
+//     // Read the contents of the folder
+//     const folder = path.join(__dirname, 'temp');
+//     const files = fs.readdirSync(folder);
 
-    // Iterate over each file and delete it
-    files.forEach(file => {
-        const filePath = path.join(folder, file);
-        fs.unlinkSync(filePath);
-    });
-});
+//     // Iterate over each file and delete it
+//     files.forEach(file => {
+//         const filePath = path.join(folder, file);
+//         fs.unlinkSync(filePath);
+//     });
+// });
 
 
 // Quit when all windows are closed.
